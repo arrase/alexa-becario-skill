@@ -14,11 +14,8 @@ from ask_sdk_core.handler_input import HandlerInput
 
 from ask_sdk_model import Response
 
-from ask_sdk_model.interfaces.custom_interface_controller import (
-    SendDirectiveDirective,
-    Header,
-    Endpoint
-)
+from ask_sdk_model.interfaces.custom_interface_controller import SendDirectiveDirective, Header, Endpoint
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
