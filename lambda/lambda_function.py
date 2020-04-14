@@ -7,12 +7,18 @@
 import logging
 import ask_sdk_core.utils as ask_utils
 
-from ask_sdk_core.skill_builder import SkillBuilder
+from ask_sdk_core.skill_builder import CustomSkillBuilder
 from ask_sdk_core.dispatch_components import AbstractRequestHandler
 from ask_sdk_core.dispatch_components import AbstractExceptionHandler
 from ask_sdk_core.handler_input import HandlerInput
 
 from ask_sdk_model import Response
+
+from ask_sdk_model.interfaces.custom_interface_controller import (
+    SendDirectiveDirective,
+    Header,
+    Endpoint
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -46,10 +52,16 @@ class HelloWorldIntentHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
         speak_output = "Hello World!"
+        directive = SendDirectiveDirective(
+                header=Header(namespace='Custom.ShellRunner', name='TVOFF'),
+                endpoint=Endpoint(endpoint_id='AGTB827EB4CE30D'),
+                payload={}
+        )
 
         return (
             handler_input.response_builder
                 .speak(speak_output)
+                .add_directive(directive)
                 # .ask("add a reprompt if you want to keep the session open for the user to respond")
                 .response
         )
