@@ -52,27 +52,27 @@ def launch_request_handler(handler_input: HandlerInput):
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("TVOffIntent"))
 def tv_off_intent_handler(handler_input: HandlerInput):
-    return gadget_intent_response(handler_input, 'TVOFF', "marchando")
+    return gadget_intent_response(handler_input, 'TVOFF', "Marchando.")
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("TVOnIntent"))
 def tv_on_intent_handler(handler_input: HandlerInput):
-    return gadget_intent_response(handler_input, 'TVON', "no pongas porno")
+    return gadget_intent_response(handler_input, 'TVON', "No pongas porno.")
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("TVAsIntent"))
 def tv_as_intent_handler(handler_input: HandlerInput):
-    return gadget_intent_response(handler_input, 'TVAS', "pues vale")
+    return gadget_intent_response(handler_input, 'TVAS', "Pues vale.")
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("RebootIntent"))
 def reboot_intent_handler(handler_input: HandlerInput):
-    return gadget_intent_response(handler_input, 'REBOOT', "esto puede ser mala idea")
+    return gadget_intent_response(handler_input, 'REBOOT', "Esto puede ser mala idea.")
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("UpgradeIntent"))
 def upgrade_intent_handler(handler_input: HandlerInput):
-    return gadget_intent_response(handler_input, 'UPGRADE', "ya es navidad?")
+    return gadget_intent_response(handler_input, 'UPGRADE', "Ya es navidad?")
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("AMAZON.NoIntent"))
