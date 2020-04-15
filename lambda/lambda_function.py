@@ -141,6 +141,7 @@ def gadget_intent_response(handler_input, directive, response_msg):
     return (response_builder
             .speak(response_msg)
             .add_directive(build_send_directive(endpoint_id, directive))
+            .set_should_end_session(True)
             .response)
 
 lambda_handler = skill_builder.lambda_handler()
