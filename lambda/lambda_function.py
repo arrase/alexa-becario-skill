@@ -58,10 +58,28 @@ def launch_request_handler(handler_input: HandlerInput):
             .response)
 
 
-@skill_builder.request_handler(can_handle_func=is_intent_name("AMAZON.YesIntent"))
-def yes_intent_handler(handler_input: HandlerInput):
-    logger.info("YesIntent received. Starting game.")
+@skill_builder.request_handler(can_handle_func=is_intent_name("TVOffIntent"))
+def tv_off_intent_handler(handler_input: HandlerInput):
+    # Retrieve the stored gadget endpoint ID from the SessionAttributes.
+    session_attr = handler_input.attributes_manager.session_attributes
+    endpoint_id = session_attr['endpointId']
 
+    # Create a token to be assigned to the EventHandler and store it
+    # in session attributes for stopping the EventHandler later.
+    token = str(uuid.uuid4())
+    session_attr['token'] = token
+
+    response_builder = handler_input.response_builder
+
+    # Send the BlindLED Directive to trigger the cycling animation of the LED.
+    # and, start a EventHandler for 10 seconds to receive only one
+    return (response_builder
+            .add_directive(build_send_directive(endpoint_id,'TVOFF'))
+            .response)
+
+
+@skill_builder.request_handler(can_handle_func=is_intent_name("TVOnIntent"))
+def tv_on_intent_handler(handler_input: HandlerInput):
     # Retrieve the stored gadget endpoint ID from the SessionAttributes.
     session_attr = handler_input.attributes_manager.session_attributes
     endpoint_id = session_attr['endpointId']
