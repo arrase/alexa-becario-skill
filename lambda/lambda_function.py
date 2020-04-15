@@ -85,7 +85,7 @@ def yes_intent_handler(handler_input: HandlerInput):
                                                       'BLUE', 'PURPLE', 'WHITE'],
                                                      1000, 2, True))
             .add_directive(build_start_event_handler_directive(token, 10000,
-                                                               'Custom.ColorCyclerGadget', 'ReportColor',
+                                                               'Custom.ShellRunnerGadget', 'ReportColor',
                                                                FilterMatchAction.SEND_AND_TERMINATE,
                                                                {'data': "You didn't press the button. Good bye!"}))
             .response)
@@ -128,8 +128,8 @@ def custom_interface_event_handler(handler_input: HandlerInput):
     namespace = custom_event.header.namespace
     name = custom_event.header.name
 
-    if namespace == 'Custom.ColorCyclerGadget' and name == 'ReportColor':
-        # On receipt of 'Custom.ColorCyclerGadget.ReportColor' event, speak the reported color
+    if namespace == 'Custom.ShellRunnerGadget' and name == 'ReportColor':
+        # On receipt of 'Custom.ShellRunnerGadget.ReportColor' event, speak the reported color
         # and end skill session.
         return (response_builder
                 .speak(payload['color'] + ' is the selected color. Thank you for playing. Good bye!')
@@ -215,7 +215,7 @@ def get_connected_endpoints(handler_input: HandlerInput):
 
 def build_blink_led_directive(endpoint_id, colors_list, intervalMs, iterations, startGame):
     return SendDirectiveDirective(
-        header=Header(namespace='Custom.ColorCyclerGadget', name='BlinkLED'),
+        header=Header(namespace='Custom.ShellRunnerGadget', name='BlinkLED'),
         endpoint=Endpoint(endpoint_id=endpoint_id),
         payload={
             'colors_list': colors_list,
@@ -228,7 +228,7 @@ def build_blink_led_directive(endpoint_id, colors_list, intervalMs, iterations, 
 
 def build_stop_led_directive(endpoint_id):
     return SendDirectiveDirective(
-        header=Header(namespace='Custom.ColorCyclerGadget', name='StopLED'),
+        header=Header(namespace='Custom.ShellRunnerGadget', name='StopLED'),
         endpoint=Endpoint(endpoint_id=endpoint_id),
         payload={}
     )
