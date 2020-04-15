@@ -126,7 +126,7 @@ def error_handler(handler_input, exception):
     logger.info("==Error==")
     logger.error(exception, exc_info=True)
     return (handler_input.response_builder
-            .speak("I'm sorry, something went wrong!").response)
+            .speak("Oups! .... prueba otra vez.").response)
 
 
 @skill_builder.global_request_interceptor()
