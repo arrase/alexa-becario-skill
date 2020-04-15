@@ -28,6 +28,22 @@
           ]
         },
         {
+          "name": "RebootIntent",
+          "slots": [],
+          "samples": [
+            "reiníciate",
+            "suicídate"
+          ]
+        },
+        {
+          "name": "UpgradeIntent",
+          "slots": [],
+          "samples": [
+            "actualízate",
+            "nuevo y gratis"
+          ]
+        },
+        {
           "name": "AMAZON.NoIntent",
           "samples": [
             "no",

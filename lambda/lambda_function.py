@@ -1,12 +1,4 @@
-#
-# Copyright 2019 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
-# These materials are licensed under the Amazon Software License in connection with the Alexa Gadgets Program.
-# The Agreement is available at https://aws.amazon.com/asl/.
-# See the Agreement for the specific terms and conditions of the Agreement.
-# Capitalized terms not defined in this file have the meanings given to them in the Agreement.
-#
 import logging.handlers
-import uuid
 
 from ask_sdk_core.skill_builder import CustomSkillBuilder
 from ask_sdk_core.api_client import DefaultApiClient
@@ -60,42 +52,22 @@ def launch_request_handler(handler_input: HandlerInput):
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("TVOffIntent"))
 def tv_off_intent_handler(handler_input: HandlerInput):
-    # Retrieve the stored gadget endpoint ID from the SessionAttributes.
-    session_attr = handler_input.attributes_manager.session_attributes
-    endpoint_id = session_attr['endpointId']
-
-    # Create a token to be assigned to the EventHandler and store it
-    # in session attributes for stopping the EventHandler later.
-    token = str(uuid.uuid4())
-    session_attr['token'] = token
-
-    response_builder = handler_input.response_builder
-
-    # Send the BlindLED Directive to trigger the cycling animation of the LED.
-    # and, start a EventHandler for 10 seconds to receive only one
-    return (response_builder
-            .add_directive(build_send_directive(endpoint_id,'TVOFF'))
-            .response)
+    return gadget_intent_response(handler_input, 'TVOFF')
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("TVOnIntent"))
 def tv_on_intent_handler(handler_input: HandlerInput):
-    # Retrieve the stored gadget endpoint ID from the SessionAttributes.
-    session_attr = handler_input.attributes_manager.session_attributes
-    endpoint_id = session_attr['endpointId']
+    return gadget_intent_response(handler_input, 'TVON')
 
-    # Create a token to be assigned to the EventHandler and store it
-    # in session attributes for stopping the EventHandler later.
-    token = str(uuid.uuid4())
-    session_attr['token'] = token
 
-    response_builder = handler_input.response_builder
+@skill_builder.request_handler(can_handle_func=is_intent_name("RebootIntent"))
+def reboot_intent_handler(handler_input: HandlerInput):
+    return gadget_intent_response(handler_input, 'REBOOT')
 
-    # Send the BlindLED Directive to trigger the cycling animation of the LED.
-    # and, start a EventHandler for 10 seconds to receive only one
-    return (response_builder
-            .add_directive(build_send_directive(endpoint_id,'TVON'))
-            .response)
+
+@skill_builder.request_handler(can_handle_func=is_intent_name("UpgradeIntent"))
+def upgrade_intent_handler(handler_input: HandlerInput):
+    return gadget_intent_response(handler_input, 'UPGRADE')
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("AMAZON.NoIntent"))
@@ -155,5 +127,14 @@ def build_send_directive(endpoint_id, directive):
         payload={}
     )
 
+def gadget_intent_response(handler_input, directive):
+    # Retrieve the stored gadget endpoint ID from the SessionAttributes.
+    session_attr = handler_input.attributes_manager.session_attributes
+    endpoint_id = session_attr['endpointId']
+    response_builder = handler_input.response_builder
+
+    return (response_builder
+            .add_directive(build_send_directive(endpoint_id, directive))
+            .response)
 
 lambda_handler = skill_builder.lambda_handler()
