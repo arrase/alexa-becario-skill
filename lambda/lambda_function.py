@@ -1,177 +1,259 @@
-# -*- coding: utf-8 -*-
+#
+# Copyright 2019 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+# These materials are licensed under the Amazon Software License in connection with the Alexa Gadgets Program.
+# The Agreement is available at https://aws.amazon.com/asl/.
+# See the Agreement for the specific terms and conditions of the Agreement.
+# Capitalized terms not defined in this file have the meanings given to them in the Agreement.
+#
+import logging.handlers
+import uuid
 
-# This sample demonstrates handling intents from an Alexa skill using the Alexa Skills Kit SDK for Python.
-# Please visit https://alexa.design/cookbook for additional examples on implementing slots, dialog management,
-# session persistence, api calls, and more.
-# This sample is built using the handler classes approach in skill builder.
-import logging
-import ask_sdk_core.utils as ask_utils
-
-from ask_sdk_core.skill_builder import SkillBuilder
-from ask_sdk_core.dispatch_components import AbstractRequestHandler
-from ask_sdk_core.dispatch_components import AbstractExceptionHandler
+from ask_sdk_core.skill_builder import CustomSkillBuilder
+from ask_sdk_core.api_client import DefaultApiClient
+from ask_sdk_core.utils import is_request_type, is_intent_name
 from ask_sdk_core.handler_input import HandlerInput
+from ask_sdk_core.serialize import DefaultSerializer
 
-from ask_sdk_model import Response
+from ask_sdk_model.interfaces.custom_interface_controller import (
+    StartEventHandlerDirective, EventFilter, Expiration, FilterMatchAction,
+    StopEventHandlerDirective,
+    SendDirectiveDirective,
+    Header,
+    Endpoint
+)
 
-from ask_sdk_model.interfaces.custom_interface_controller import (SendDirectiveDirective, Header, Endpoint)
-
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+serializer = DefaultSerializer()
+skill_builder = CustomSkillBuilder(api_client=DefaultApiClient())
 
 
-class LaunchRequestHandler(AbstractRequestHandler):
-    """Handler for Skill Launch."""
-    def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
-        return ask_utils.is_request_type("LaunchRequest")(handler_input)
+@skill_builder.request_handler(can_handle_func=is_request_type("LaunchRequest"))
+def launch_request_handler(handler_input: HandlerInput):
+    logger.info("== Launch Intent ==")
 
-    def handle(self, handler_input):
-        # type: (HandlerInput) -> Response
-        speak_output = "Welcome, you can say Hello or Help. Which would you like to try?"
+    response_builder = handler_input.response_builder
 
-        return (
-            handler_input.response_builder
-                .speak(speak_output)
-                .ask(speak_output)
-                .response
-        )
+    system = handler_input.request_envelope.context.system
 
+    # Get connected gadget endpoint ID.
+    endpoints = get_connected_endpoints(handler_input)
+    logger.debug("Checking endpoint..")
+    if not endpoints:
+        logger.debug("No connected gadget endpoints available.")
+        return (response_builder
+                .speak("No gadgets found. Please try again after connecting your gadget.")
+                .set_should_end_session(True)
+                .response)
 
-class HelloWorldIntentHandler(AbstractRequestHandler):
-    """Handler for Hello World Intent."""
-    def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
-        return ask_utils.is_intent_name("HelloWorldIntent")(handler_input)
+    endpoint_id = endpoints[0].endpoint_id
 
-    def handle(self, handler_input):
-        # type: (HandlerInput) -> Response
-        speak_output = "Hello World!"
-        directive = SendDirectiveDirective(
-                header=Header(namespace='Custom.ShellRunner', name='TVOFF'),
-                endpoint=Endpoint(endpoint_id='AGTB827EB4CE30D'),
-                payload={}
-        )
+    # Store endpoint ID for using it to send custom directives later.
+    logger.debug("Received endpoints. Storing Endpoint Id: %s", endpoint_id)
+    session_attr = handler_input.attributes_manager.session_attributes
+    session_attr['endpointId'] = endpoint_id
 
-        return (
-            handler_input.response_builder
-                .speak(speak_output)
-                .add_directive(directive)
-                # .ask("add a reprompt if you want to keep the session open for the user to respond")
-                .response
-        )
+    # Send the BlindLEDDirective to make the LED green for 20 seconds.
+    return (response_builder
+            .speak("Hi! I will cycle through a spectrum of colors. " +
+                   "When you press the button, I'll report back which color you pressed. Are you ready?")
+            .add_directive(build_blink_led_directive(endpoint_id, ['GREEN'], 1000, 20, False))
+            .set_should_end_session(False)
+            .response)
 
 
-class HelpIntentHandler(AbstractRequestHandler):
-    """Handler for Help Intent."""
-    def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
-        return ask_utils.is_intent_name("AMAZON.HelpIntent")(handler_input)
+@skill_builder.request_handler(can_handle_func=is_intent_name("AMAZON.YesIntent"))
+def yes_intent_handler(handler_input: HandlerInput):
+    logger.info("YesIntent received. Starting game.")
 
-    def handle(self, handler_input):
-        # type: (HandlerInput) -> Response
-        speak_output = "You can say hello to me! How can I help?"
+    # Retrieve the stored gadget endpoint ID from the SessionAttributes.
+    session_attr = handler_input.attributes_manager.session_attributes
+    endpoint_id = session_attr['endpointId']
 
-        return (
-            handler_input.response_builder
-                .speak(speak_output)
-                .ask(speak_output)
-                .response
-        )
+    # Create a token to be assigned to the EventHandler and store it
+    # in session attributes for stopping the EventHandler later.
+    token = str(uuid.uuid4())
+    session_attr['token'] = token
 
+    response_builder = handler_input.response_builder
 
-class CancelOrStopIntentHandler(AbstractRequestHandler):
-    """Single handler for Cancel and Stop Intent."""
-    def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
-        return (ask_utils.is_intent_name("AMAZON.CancelIntent")(handler_input) or
-                ask_utils.is_intent_name("AMAZON.StopIntent")(handler_input))
-
-    def handle(self, handler_input):
-        # type: (HandlerInput) -> Response
-        speak_output = "Goodbye!"
-
-        return (
-            handler_input.response_builder
-                .speak(speak_output)
-                .response
-        )
+    # Send the BlindLED Directive to trigger the cycling animation of the LED.
+    # and, start a EventHandler for 10 seconds to receive only one
+    return (response_builder
+            .add_directive(build_blink_led_directive(endpoint_id,
+                                                     ['RED', 'YELLOW', 'GREEN', 'CYAN',
+                                                      'BLUE', 'PURPLE', 'WHITE'],
+                                                     1000, 2, True))
+            .add_directive(build_start_event_handler_directive(token, 10000,
+                                                               'Custom.ColorCyclerGadget', 'ReportColor',
+                                                               FilterMatchAction.SEND_AND_TERMINATE,
+                                                               {'data': "You didn't press the button. Good bye!"}))
+            .response)
 
 
-class SessionEndedRequestHandler(AbstractRequestHandler):
-    """Handler for Session End."""
-    def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
-        return ask_utils.is_request_type("SessionEndedRequest")(handler_input)
+@skill_builder.request_handler(can_handle_func=is_intent_name("AMAZON.NoIntent"))
+def no_intent_handler(handler_input: HandlerInput):
+    logger.info("Received NoIntent..Exiting.")
 
-    def handle(self, handler_input):
-        # type: (HandlerInput) -> Response
+    # Retrieve the stored gadget endpointId from the SessionAttributes.
+    session_attr = handler_input.attributes_manager.session_attributes
+    endpoint_id = session_attr['endpointId']
 
-        # Any cleanup logic goes here.
+    response_builder = handler_input.response_builder
 
-        return handler_input.response_builder.response
-
-
-class IntentReflectorHandler(AbstractRequestHandler):
-    """The intent reflector is used for interaction model testing and debugging.
-    It will simply repeat the intent the user said. You can create custom handlers
-    for your intents by defining them above, then also adding them to the request
-    handler chain below.
-    """
-    def can_handle(self, handler_input):
-        # type: (HandlerInput) -> bool
-        return ask_utils.is_request_type("IntentRequest")(handler_input)
-
-    def handle(self, handler_input):
-        # type: (HandlerInput) -> Response
-        intent_name = ask_utils.get_intent_name(handler_input)
-        speak_output = "You just triggered " + intent_name + "."
-
-        return (
-            handler_input.response_builder
-                .speak(speak_output)
-                # .ask("add a reprompt if you want to keep the session open for the user to respond")
-                .response
-        )
+    return (response_builder
+            .speak("Alright. Good bye!")
+            .add_directive(build_stop_led_directive(endpoint_id))
+            .set_should_end_session(True)
+            .response)
 
 
-class CatchAllExceptionHandler(AbstractExceptionHandler):
-    """Generic error handling to capture any syntax or routing errors. If you receive an error
-    stating the request handler chain is not found, you have not implemented a handler for
-    the intent being invoked or included it in the skill builder below.
-    """
-    def can_handle(self, handler_input, exception):
-        # type: (HandlerInput, Exception) -> bool
-        return True
+@skill_builder.request_handler(can_handle_func=is_request_type("CustomInterfaceController.EventsReceived"))
+def custom_interface_event_handler(handler_input: HandlerInput):
+    logger.info("== Received Custom Event ==")
 
-    def handle(self, handler_input, exception):
-        # type: (HandlerInput, Exception) -> Response
-        logger.error(exception, exc_info=True)
+    request = handler_input.request_envelope.request
+    session_attr = handler_input.attributes_manager.session_attributes
+    response_builder = handler_input.response_builder
 
-        speak_output = "Sorry, I had trouble doing what you asked. Please try again."
+    # Validate event handler token
+    if session_attr['token'] != request.token:
+        logger.info("EventHandler token doesn't match. Ignoring this event.")
+        return (response_builder
+                .speak("EventHandler token doesn't match. Ignoring this event.")
+                .response)
 
-        return (
-            handler_input.response_builder
-                .speak(speak_output)
-                .ask(speak_output)
-                .response
-        )
+    custom_event = request.events[0]
+    payload = custom_event.payload
+    namespace = custom_event.header.namespace
+    name = custom_event.header.name
 
-# The SkillBuilder object acts as the entry point for your skill, routing all request and response
-# payloads to the handlers above. Make sure any new handlers or interceptors you've
-# defined are included below. The order matters - they're processed top to bottom.
+    if namespace == 'Custom.ColorCyclerGadget' and name == 'ReportColor':
+        # On receipt of 'Custom.ColorCyclerGadget.ReportColor' event, speak the reported color
+        # and end skill session.
+        return (response_builder
+                .speak(payload['color'] + ' is the selected color. Thank you for playing. Good bye!')
+                .set_should_end_session(True)
+                .response)
+
+    return response_builder.response
 
 
-sb = SkillBuilder()
+@skill_builder.request_handler(can_handle_func=is_request_type("CustomInterfaceController.Expired"))
+def custom_interface_expiration_handler(handler_input):
+    logger.info("== Custom Event Expiration Input ==")
 
-sb.add_request_handler(LaunchRequestHandler())
-sb.add_request_handler(HelloWorldIntentHandler())
-sb.add_request_handler(HelpIntentHandler())
-sb.add_request_handler(CancelOrStopIntentHandler())
-sb.add_request_handler(SessionEndedRequestHandler())
-sb.add_request_handler(IntentReflectorHandler()) # make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
+    request = handler_input.request_envelope.request
+    response_builder = handler_input.response_builder
+    session_attr = handler_input.attributes_manager.session_attributes
+    endpoint_id = session_attr['endpointId']
 
-sb.add_exception_handler(CatchAllExceptionHandler())
+    # When the EventHandler expires, send StopLED directive to stop LED animation
+    # and end skill session.
+    return (response_builder
+            .add_directive(build_stop_led_directive(endpoint_id))
+            .speak(request.expiration_payload['data'])
+            .set_should_end_session(True)
+            .response)
 
-lambda_handler = sb.lambda_handler()
+
+@skill_builder.request_handler(can_handle_func=lambda handler_input:
+                               is_intent_name("AMAZON.CancelIntent")(handler_input) or
+                               is_intent_name("AMAZON.StopIntent")(handler_input))
+def stop_and_cancel_intent_handler(handler_input):
+    logger.info("Received a Stop or a Cancel Intent..")
+    session_attr = handler_input.attributes_manager.session_attributes
+    response_builder = handler_input.response_builder
+    endpoint_id = session_attr['endpointId']
+
+    # When the user stops the skill, stop the EventHandler,
+    # send StopLED directive to stop LED animation and end skill session.
+    if 'token' in session_attr.keys():
+        logger.debug("Active session detected, sending stop EventHandlerDirective.")
+        response_builder.add_directive(StopEventHandlerDirective(session_attr['token']))
+
+    return (response_builder
+            .speak("Alright, see you later.")
+            .add_directive(build_stop_led_directive(endpoint_id))
+            .set_should_end_session(True)
+            .response)
+
+
+@skill_builder.request_handler(can_handle_func=is_request_type("SessionEndedRequest"))
+def session_ended_request_handler(handler_input):
+    logger.info("Session ended with reason: " +
+                handler_input.request_envelope.request.reason.to_str())
+    return handler_input.response_builder.response
+
+
+@skill_builder.exception_handler(can_handle_func=lambda i, e: True)
+def error_handler(handler_input, exception):
+    logger.info("==Error==")
+    logger.error(exception, exc_info=True)
+    return (handler_input.response_builder
+            .speak("I'm sorry, something went wrong!").response)
+
+
+@skill_builder.global_request_interceptor()
+def log_request(handler_input):
+    # Log the request for debugging purposes.
+    logger.info("==Request==\r" +
+                str(serializer.serialize(handler_input.request_envelope)))
+
+
+@skill_builder.global_response_interceptor()
+def log_response(handler_input, response):
+    # Log the response for debugging purposes.
+    logger.info("==Response==\r" + str(serializer.serialize(response)))
+    logger.info("==Session Attributes==\r" +
+                str(serializer.serialize(handler_input.attributes_manager.session_attributes)))
+
+
+def get_connected_endpoints(handler_input: HandlerInput):
+    return handler_input.service_client_factory.get_endpoint_enumeration_service().get_endpoints().endpoints
+
+
+def build_blink_led_directive(endpoint_id, colors_list, intervalMs, iterations, startGame):
+    return SendDirectiveDirective(
+        header=Header(namespace='Custom.ColorCyclerGadget', name='BlinkLED'),
+        endpoint=Endpoint(endpoint_id=endpoint_id),
+        payload={
+            'colors_list': colors_list,
+            'intervalMs': intervalMs,
+            'iterations': iterations,
+            'startGame': startGame
+        }
+    )
+
+
+def build_stop_led_directive(endpoint_id):
+    return SendDirectiveDirective(
+        header=Header(namespace='Custom.ColorCyclerGadget', name='StopLED'),
+        endpoint=Endpoint(endpoint_id=endpoint_id),
+        payload={}
+    )
+
+
+def build_start_event_handler_directive(token, duration_ms, namespace,
+                                        name, filter_match_action, expiration_payload):
+    return StartEventHandlerDirective(
+        token=token,
+        event_filter=EventFilter(
+            filter_expression={
+                'and': [
+                    {'==': [{'var': 'header.namespace'}, namespace]},
+                    {'==': [{'var': 'header.name'}, name]}
+                ]
+            },
+            filter_match_action=filter_match_action
+        ),
+        expiration=Expiration(
+            duration_in_milliseconds=duration_ms,
+            expiration_payload=expiration_payload))
+
+
+def build_stop_event_handler_directive(token):
+    return StopEventHandlerDirective(token=token)
+
+
+lambda_handler = skill_builder.lambda_handler()
