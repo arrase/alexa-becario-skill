@@ -28,6 +28,15 @@
           ]
         },
         {
+          "name": "TVAsIntent",
+          "slots": [],
+          "samples": [
+            "da la cara",
+            "manifiéstate",
+            "muestra la pantalla"
+          ]
+        },
+        {
           "name": "RebootIntent",
           "slots": [],
           "samples": [
