@@ -15,8 +15,6 @@ from ask_sdk_core.handler_input import HandlerInput
 from ask_sdk_core.serialize import DefaultSerializer
 
 from ask_sdk_model.interfaces.custom_interface_controller import (
-    StartEventHandlerDirective, EventFilter, Expiration, FilterMatchAction,
-    StopEventHandlerDirective,
     SendDirectiveDirective,
     Header,
     Endpoint
@@ -42,7 +40,7 @@ def launch_request_handler(handler_input: HandlerInput):
     if not endpoints:
         logger.debug("No connected gadget endpoints available.")
         return (response_builder
-                .speak("No gadgets found. Please try again after connecting your gadget.")
+                .speak("No se encontraron gadgets. Inténtalo de nuevo después de conectar tu gadget.")
                 .set_should_end_session(True)
                 .response)
 
@@ -55,9 +53,7 @@ def launch_request_handler(handler_input: HandlerInput):
 
     # Send the BlindLEDDirective to make the LED green for 20 seconds.
     return (response_builder
-            .speak("Hi! I will cycle through a spectrum of colors. " +
-                   "When you press the button, I'll report back which color you pressed. Are you ready?")
-            .add_directive(build_blink_led_directive(endpoint_id, ['GREEN'], 1000, 20, False))
+            .speak("Vamos al lío")
             .set_should_end_session(False)
             .response)
 
@@ -80,14 +76,7 @@ def yes_intent_handler(handler_input: HandlerInput):
     # Send the BlindLED Directive to trigger the cycling animation of the LED.
     # and, start a EventHandler for 10 seconds to receive only one
     return (response_builder
-            .add_directive(build_blink_led_directive(endpoint_id,
-                                                     ['RED', 'YELLOW', 'GREEN', 'CYAN',
-                                                      'BLUE', 'PURPLE', 'WHITE'],
-                                                     1000, 2, True))
-            .add_directive(build_start_event_handler_directive(token, 10000,
-                                                               'Custom.ShellRunnerGadget', 'ReportColor',
-                                                               FilterMatchAction.SEND_AND_TERMINATE,
-                                                               {'data': "You didn't press the button. Good bye!"}))
+            .add_directive(build_send_directive(endpoint_id,'TVON'))
             .response)
 
 
@@ -102,79 +91,7 @@ def no_intent_handler(handler_input: HandlerInput):
     response_builder = handler_input.response_builder
 
     return (response_builder
-            .speak("Alright. Good bye!")
-            .add_directive(build_stop_led_directive(endpoint_id))
-            .set_should_end_session(True)
-            .response)
-
-
-@skill_builder.request_handler(can_handle_func=is_request_type("CustomInterfaceController.EventsReceived"))
-def custom_interface_event_handler(handler_input: HandlerInput):
-    logger.info("== Received Custom Event ==")
-
-    request = handler_input.request_envelope.request
-    session_attr = handler_input.attributes_manager.session_attributes
-    response_builder = handler_input.response_builder
-
-    # Validate event handler token
-    if session_attr['token'] != request.token:
-        logger.info("EventHandler token doesn't match. Ignoring this event.")
-        return (response_builder
-                .speak("EventHandler token doesn't match. Ignoring this event.")
-                .response)
-
-    custom_event = request.events[0]
-    payload = custom_event.payload
-    namespace = custom_event.header.namespace
-    name = custom_event.header.name
-
-    if namespace == 'Custom.ShellRunnerGadget' and name == 'ReportColor':
-        # On receipt of 'Custom.ShellRunnerGadget.ReportColor' event, speak the reported color
-        # and end skill session.
-        return (response_builder
-                .speak(payload['color'] + ' is the selected color. Thank you for playing. Good bye!')
-                .set_should_end_session(True)
-                .response)
-
-    return response_builder.response
-
-
-@skill_builder.request_handler(can_handle_func=is_request_type("CustomInterfaceController.Expired"))
-def custom_interface_expiration_handler(handler_input):
-    logger.info("== Custom Event Expiration Input ==")
-
-    request = handler_input.request_envelope.request
-    response_builder = handler_input.response_builder
-    session_attr = handler_input.attributes_manager.session_attributes
-    endpoint_id = session_attr['endpointId']
-
-    # When the EventHandler expires, send StopLED directive to stop LED animation
-    # and end skill session.
-    return (response_builder
-            .add_directive(build_stop_led_directive(endpoint_id))
-            .speak(request.expiration_payload['data'])
-            .set_should_end_session(True)
-            .response)
-
-
-@skill_builder.request_handler(can_handle_func=lambda handler_input:
-                               is_intent_name("AMAZON.CancelIntent")(handler_input) or
-                               is_intent_name("AMAZON.StopIntent")(handler_input))
-def stop_and_cancel_intent_handler(handler_input):
-    logger.info("Received a Stop or a Cancel Intent..")
-    session_attr = handler_input.attributes_manager.session_attributes
-    response_builder = handler_input.response_builder
-    endpoint_id = session_attr['endpointId']
-
-    # When the user stops the skill, stop the EventHandler,
-    # send StopLED directive to stop LED animation and end skill session.
-    if 'token' in session_attr.keys():
-        logger.debug("Active session detected, sending stop EventHandlerDirective.")
-        response_builder.add_directive(StopEventHandlerDirective(session_attr['token']))
-
-    return (response_builder
-            .speak("Alright, see you later.")
-            .add_directive(build_stop_led_directive(endpoint_id))
+            .speak("Deu!")
             .set_should_end_session(True)
             .response)
 
@@ -213,47 +130,12 @@ def get_connected_endpoints(handler_input: HandlerInput):
     return handler_input.service_client_factory.get_endpoint_enumeration_service().get_endpoints().endpoints
 
 
-def build_blink_led_directive(endpoint_id, colors_list, intervalMs, iterations, startGame):
+def build_send_directive(endpoint_id, directive):
     return SendDirectiveDirective(
-        header=Header(namespace='Custom.ShellRunnerGadget', name='BlinkLED'),
-        endpoint=Endpoint(endpoint_id=endpoint_id),
-        payload={
-            'colors_list': colors_list,
-            'intervalMs': intervalMs,
-            'iterations': iterations,
-            'startGame': startGame
-        }
-    )
-
-
-def build_stop_led_directive(endpoint_id):
-    return SendDirectiveDirective(
-        header=Header(namespace='Custom.ShellRunnerGadget', name='StopLED'),
+        header=Header(namespace='Custom.ShellRunnerGadget', name=directive),
         endpoint=Endpoint(endpoint_id=endpoint_id),
         payload={}
     )
-
-
-def build_start_event_handler_directive(token, duration_ms, namespace,
-                                        name, filter_match_action, expiration_payload):
-    return StartEventHandlerDirective(
-        token=token,
-        event_filter=EventFilter(
-            filter_expression={
-                'and': [
-                    {'==': [{'var': 'header.namespace'}, namespace]},
-                    {'==': [{'var': 'header.name'}, name]}
-                ]
-            },
-            filter_match_action=filter_match_action
-        ),
-        expiration=Expiration(
-            duration_in_milliseconds=duration_ms,
-            expiration_payload=expiration_payload))
-
-
-def build_stop_event_handler_directive(token):
-    return StopEventHandlerDirective(token=token)
 
 
 lambda_handler = skill_builder.lambda_handler()
