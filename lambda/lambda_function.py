@@ -52,27 +52,27 @@ def launch_request_handler(handler_input: HandlerInput):
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("TVOffIntent"))
 def tv_off_intent_handler(handler_input: HandlerInput):
-    return gadget_intent_response(handler_input, 'TVOFF')
+    return gadget_intent_response(handler_input, 'TVOFF', "marchando")
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("TVOnIntent"))
 def tv_on_intent_handler(handler_input: HandlerInput):
-    return gadget_intent_response(handler_input, 'TVON')
+    return gadget_intent_response(handler_input, 'TVON', "no pongas porno")
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("TVAsIntent"))
 def tv_as_intent_handler(handler_input: HandlerInput):
-    return gadget_intent_response(handler_input, 'TVAS')
+    return gadget_intent_response(handler_input, 'TVAS', "pues vale")
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("RebootIntent"))
 def reboot_intent_handler(handler_input: HandlerInput):
-    return gadget_intent_response(handler_input, 'REBOOT')
+    return gadget_intent_response(handler_input, 'REBOOT', "esto puede ser mala idea")
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("UpgradeIntent"))
 def upgrade_intent_handler(handler_input: HandlerInput):
-    return gadget_intent_response(handler_input, 'UPGRADE')
+    return gadget_intent_response(handler_input, 'UPGRADE', "ya es navidad?")
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("AMAZON.NoIntent"))
@@ -132,13 +132,14 @@ def build_send_directive(endpoint_id, directive):
         payload={}
     )
 
-def gadget_intent_response(handler_input, directive):
+def gadget_intent_response(handler_input, directive, response_msg):
     # Retrieve the stored gadget endpoint ID from the SessionAttributes.
     session_attr = handler_input.attributes_manager.session_attributes
     endpoint_id = session_attr['endpointId']
     response_builder = handler_input.response_builder
 
     return (response_builder
+            .speak(response_msg)
             .add_directive(build_send_directive(endpoint_id, directive))
             .response)
 
