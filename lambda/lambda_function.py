@@ -132,6 +132,7 @@ def build_send_directive(endpoint_id, directive):
         payload={}
     )
 
+
 def gadget_intent_response(handler_input, directive, response_msg):
     # Retrieve the stored gadget endpoint ID from the SessionAttributes.
     session_attr = handler_input.attributes_manager.session_attributes
