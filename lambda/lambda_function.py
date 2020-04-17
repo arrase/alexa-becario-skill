@@ -111,7 +111,7 @@ def no_intent_handler(handler_input: HandlerInput):
 
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("AMAZON.HelpIntent"))
-def no_intent_handler(handler_input: HandlerInput):
+def help_intent_handler(handler_input: HandlerInput):
     # Retrieve the stored gadget endpointId from the SessionAttributes.
     session_attr = handler_input.attributes_manager.session_attributes
     endpoint_id = session_attr['endpointId']
