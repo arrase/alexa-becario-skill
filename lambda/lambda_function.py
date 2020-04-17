@@ -75,6 +75,26 @@ def upgrade_intent_handler(handler_input: HandlerInput):
     return gadget_intent_response(handler_input, 'UPGRADE', "Ya es navidad?")
 
 
+@skill_builder.request_handler(can_handle_func=is_intent_name("PCHaltIntent"))
+def pc_halt_intent_handler(handler_input: HandlerInput):
+    return gadget_intent_response(handler_input, 'PCHALT', "Apagando al bicho")
+
+
+@skill_builder.request_handler(can_handle_func=is_intent_name("PCRebootIntent"))
+def pc_reboot_intent_handler(handler_input: HandlerInput):
+    return gadget_intent_response(handler_input, 'PCREBOOT', "Voy a ello")
+
+
+@skill_builder.request_handler(can_handle_func=is_intent_name("TorrentIntent"))
+def torrent_intent_handler(handler_input: HandlerInput):
+    return gadget_intent_response(handler_input, 'TORRENT', "Voy a ello")
+
+
+@skill_builder.request_handler(can_handle_func=is_intent_name("KodiIntent"))
+def kodi_intent_handler(handler_input: HandlerInput):
+    return gadget_intent_response(handler_input, 'KODI', "Voy a ello")
+
+
 @skill_builder.request_handler(can_handle_func=is_intent_name("AMAZON.NoIntent"))
 def no_intent_handler(handler_input: HandlerInput):
     logger.info("Received NoIntent..Exiting.")

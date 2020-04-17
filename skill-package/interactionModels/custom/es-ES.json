@@ -53,6 +53,39 @@
           ]
         },
         {
+          "name": "TorrentIntent",
+          "slots": [],
+          "samples": [
+            "arranca torrent",
+            "descarga películas"
+          ]
+        },
+        {
+          "name": "KodiIntent",
+          "slots": [],
+          "samples": [
+            "arranca Kodi",
+            "quiero ver películas",
+            "ver películas"
+          ]
+        },
+        {
+          "name": "PCRebootIntent",
+          "slots": [],
+          "samples": [
+            "reinicia el ordenador",
+            "reinicia el pc"
+          ]
+        },
+        {
+          "name": "PCHaltIntent",
+          "slots": [],
+          "samples": [
+            "apaga el ordenador",
+            "apaga el pc"
+          ]
+        },
+        {
           "name": "AMAZON.NoIntent",
           "samples": [
             "no",
