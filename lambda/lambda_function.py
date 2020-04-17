@@ -43,7 +43,6 @@ def launch_request_handler(handler_input: HandlerInput):
     session_attr = handler_input.attributes_manager.session_attributes
     session_attr['endpointId'] = endpoint_id
 
-    # Send the BlindLEDDirective to make the LED green for 20 seconds.
     return (response_builder
             .speak("Vamos al lío")
             .set_should_end_session(False)
@@ -107,6 +106,20 @@ def no_intent_handler(handler_input: HandlerInput):
 
     return (response_builder
             .speak("Deu!")
+            .set_should_end_session(True)
+            .response)
+
+
+@skill_builder.request_handler(can_handle_func=is_intent_name("AMAZON.HelpIntent"))
+def no_intent_handler(handler_input: HandlerInput):
+    # Retrieve the stored gadget endpointId from the SessionAttributes.
+    session_attr = handler_input.attributes_manager.session_attributes
+    endpoint_id = session_attr['endpointId']
+
+    response_builder = handler_input.response_builder
+
+    return (response_builder
+            .speak("Puedo encender o apagar la tele, mostrarme en la tele, reiniciarme o actualizarme. Y en el PC lo puedo apagar o reiniciar, descargar películas o arrancar Kodi.")
             .set_should_end_session(True)
             .response)
 
