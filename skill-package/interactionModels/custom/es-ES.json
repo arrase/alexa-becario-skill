@@ -32,7 +32,7 @@
           ]
         },
         {
-          "name": "RPIIntent",
+          "name": "RaspIntent",
           "slots": [],
           "samples": [
             "da la cara",
