@@ -32,7 +32,7 @@
           ]
         },
         {
-          "name": "RPIAsIntent",
+          "name": "RPIIntent",
           "slots": [],
           "samples": [
             "da la cara",
