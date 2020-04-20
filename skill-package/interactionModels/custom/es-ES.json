@@ -32,12 +32,21 @@
           ]
         },
         {
-          "name": "TVAsIntent",
+          "name": "RPIAsIntent",
           "slots": [],
           "samples": [
             "da la cara",
             "manifiéstate",
             "muestra la pantalla"
+          ]
+        },
+        {
+          "name": "TVAsIntent",
+          "slots": [],
+          "samples": [
+            "fuente TV",
+            "ver la tele",
+            "pon canales de TV"
           ]
         },
         {
