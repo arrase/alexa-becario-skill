@@ -63,9 +63,11 @@ def tv_on_intent_handler(handler_input: HandlerInput):
 def tv_as_intent_handler(handler_input: HandlerInput):
     return gadget_intent_response(handler_input, 'TVAS', "Pues vale.")
 
+
 @skill_builder.request_handler(can_handle_func=is_intent_name("RaspIntent"))
 def rpi_as_intent_handler(handler_input: HandlerInput):
     return gadget_intent_response(handler_input, 'RPIAS', "Pues vale.")
+
 
 @skill_builder.request_handler(can_handle_func=is_intent_name("RebootIntent"))
 def reboot_intent_handler(handler_input: HandlerInput):
