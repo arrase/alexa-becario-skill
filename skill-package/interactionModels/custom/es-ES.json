@@ -1,7 +1,7 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "becario",
+      "invocationName": "tu becario",
       "intents": [
         {
           "name": "AMAZON.FallbackIntent",
