@@ -64,6 +64,11 @@ def tv_as_intent_handler(handler_input: HandlerInput):
     return gadget_intent_response(handler_input, 'TVAS', "Pues vale.")
 
 
+@skill_builder.request_handler(can_handle_func=is_intent_name("TVMuteIntent"))
+def tv_mute_intent_handler(handler_input: HandlerInput):
+    return gadget_intent_response(handler_input, 'TVMUTE', "Pues vale.")
+
+
 @skill_builder.request_handler(can_handle_func=is_intent_name("RaspIntent"))
 def rpi_as_intent_handler(handler_input: HandlerInput):
     return gadget_intent_response(handler_input, 'RPIAS', "Pues vale.")

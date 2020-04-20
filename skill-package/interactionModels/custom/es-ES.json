@@ -32,6 +32,13 @@
           ]
         },
         {
+          "name": "TVMuteIntent",
+          "slots": [],
+          "samples": [
+            "silencia la tele"
+          ]
+        },
+        {
           "name": "RaspIntent",
           "slots": [],
           "samples": [
