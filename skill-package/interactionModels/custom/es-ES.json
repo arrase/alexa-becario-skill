@@ -12,10 +12,6 @@
           "samples": []
         },
         {
-          "name": "AMAZON.HelpIntent",
-          "samples": []
-        },
-        {
           "name": "TVOffIntent",
           "slots": [],
           "samples": [
